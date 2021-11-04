@@ -407,7 +407,7 @@ local unzFile m_unzOpenInternal(const void *path, zlib_filefunc64_32_def* pzlib_
     us.z_filefunc.zseek32_file = NULL;
     us.z_filefunc.ztell32_file = NULL;
     if (pzlib_filefunc64_32_def == NULL)
-        fill_fopen64_filefunc(&us.z_filefunc.zfile_func64);
+        m_fill_fopen64_filefunc(&us.z_filefunc.zfile_func64);
     else
         us.z_filefunc = *pzlib_filefunc64_32_def;
 

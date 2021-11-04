@@ -139,7 +139,7 @@ extern unzFile ZEXPORT m_unzOpen64 OF((const void *path));
    return unzFile handle if no error
 
    NOTE: The "64" function take a const void* pointer, because  the path is just the value passed to the
-   open64_file_func callback. Under Windows, if UNICODE is defined, using fill_fopen64_filefunc, the path
+   open64_file_func callback. Under Windows, if UNICODE is defined, using m_fill_fopen64_filefunc, the path
    is a pointer to a wide unicode string  (LPCTSTR is LPCWSTR), so const char* does not describe the reality */
 
 extern unzFile ZEXPORT m_unzOpen2 OF((const char *path, zlib_filefunc_def* pzlib_filefunc_def));
