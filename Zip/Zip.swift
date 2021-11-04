@@ -128,28 +128,28 @@ public class Zip {
         progressTracker.kind = ProgressKind.file
         
         // Begin unzipping
-        let zip = unzOpen64(path)
+        let zip = m_unzOpen64(path)
         defer {
-            unzClose(zip)
+            m_unzClose(zip)
         }
-        if unzGoToFirstFile(zip) != UNZ_OK {
+        if m_unzGoToFirstFile(zip) != UNZ_OK {
             throw ZipError.unzipFail
         }
         repeat {
             if let cPassword = password?.cString(using: String.Encoding.ascii) {
-                ret = unzOpenCurrentFilePassword(zip, cPassword)
+                ret = m_unzOpenCurrentFilePassword(zip, cPassword)
             }
             else {
-                ret = unzOpenCurrentFile(zip);
+                ret = m_unzOpenCurrentFile(zip);
             }
             if ret != UNZ_OK {
                 throw ZipError.unzipFail
             }
             var fileInfo = unz_file_info64()
             memset(&fileInfo, 0, MemoryLayout<unz_file_info>.size)
-            ret = unzGetCurrentFileInfo64(zip, &fileInfo, nil, 0, nil, 0, nil, 0)
+            ret = m_unzGetCurrentFileInfo64(zip, &fileInfo, nil, 0, nil, 0, nil, 0)
             if ret != UNZ_OK {
-                unzCloseCurrentFile(zip)
+                m_unzCloseCurrentFile(zip)
                 throw ZipError.unzipFail
             }
             currentPosition += Double(fileInfo.compressed_size)
@@ -157,7 +157,7 @@ public class Zip {
             //let fileName = UnsafeMutablePointer<CChar>(allocatingCapacity: fileNameSize)
             let fileName = UnsafeMutablePointer<CChar>.allocate(capacity: fileNameSize)
 
-            unzGetCurrentFileInfo64(zip, &fileInfo, fileName, UInt(fileNameSize), nil, 0, nil, 0)
+            m_unzGetCurrentFileInfo64(zip, &fileInfo, fileName, UInt(fileNameSize), nil, 0, nil, 0)
             fileName[Int(fileInfo.size_filename)] = 0
 
             var pathString = String(cString: fileName)
@@ -201,15 +201,15 @@ public class Zip {
                 }
             } catch {}
             if fileManager.fileExists(atPath: fullPath) && !isDirectory && !overwrite {
-                unzCloseCurrentFile(zip)
-                ret = unzGoToNextFile(zip)
+                m_unzCloseCurrentFile(zip)
+                ret = m_unzGoToNextFile(zip)
             }
 
             var writeBytes: UInt64 = 0
             var filePointer: UnsafeMutablePointer<FILE>?
             filePointer = fopen(fullPath, "wb")
             while filePointer != nil {
-                let readBytes = unzReadCurrentFile(zip, &buffer, bufferSize)
+                let readBytes = m_unzReadCurrentFile(zip, &buffer, bufferSize)
                 if readBytes > 0 {
                     guard fwrite(buffer, Int(readBytes), 1, filePointer) == 1 else {
                         throw ZipError.unzipFail
@@ -223,7 +223,7 @@ public class Zip {
 
             if let fp = filePointer { fclose(fp) }
 
-            crc_ret = unzCloseCurrentFile(zip)
+            crc_ret = m_unzCloseCurrentFile(zip)
             if crc_ret == UNZ_CRCERROR {
                 throw ZipError.unzipFail
             }
@@ -244,7 +244,7 @@ public class Zip {
                 }
             }
 
-            ret = unzGoToNextFile(zip)
+            ret = m_unzGoToNextFile(zip)
             
             // Update progress handler
             if let progressHandler = progress{
@@ -322,7 +322,7 @@ public class Zip {
         progressTracker.kind = ProgressKind.file
         
         // Begin Zipping
-        let zip = zipOpen(destinationPath, APPEND_STATUS_CREATE)
+        let zip = m_zipOpen(destinationPath, APPEND_STATUS_CREATE)
         for path in processedPaths {
             let filePath = path.filePath()
             var isDirectory: ObjCBool = false
@@ -352,10 +352,10 @@ public class Zip {
                 catch {}
                 let buffer = malloc(chunkSize)
                 if let password = password, let fileName = fileName {
-                    zipOpenNewFileInZip3(zip, fileName, &zipInfo, nil, 0, nil, 0, nil,Z_DEFLATED, compression.minizipCompression, 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, password, 0)
+                    m_zipOpenNewFileInZip3(zip, fileName, &zipInfo, nil, 0, nil, 0, nil,Z_DEFLATED, compression.minizipCompression, 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, password, 0)
                 }
                 else if let fileName = fileName {
-                    zipOpenNewFileInZip3(zip, fileName, &zipInfo, nil, 0, nil, 0, nil,Z_DEFLATED, compression.minizipCompression, 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, nil, 0)
+                    m_zipOpenNewFileInZip3(zip, fileName, &zipInfo, nil, 0, nil, 0, nil,Z_DEFLATED, compression.minizipCompression, 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, nil, 0)
                 }
                 else {
                     throw ZipError.zipFail
@@ -363,7 +363,7 @@ public class Zip {
                 var length: Int = 0
                 while (feof(input) == 0) {
                     length = fread(buffer, 1, chunkSize, input)
-                    zipWriteInFileInZip(zip, buffer, UInt32(length))
+                    m_zipWriteInFileInZip(zip, buffer, UInt32(length))
                 }
                 
                 // Update progress handler, only if progress is not 1, because
@@ -375,12 +375,12 @@ public class Zip {
                 
                 progressTracker.completedUnitCount = Int64(currentPosition)
                 
-                zipCloseFileInZip(zip)
+                m_zipCloseFileInZip(zip)
                 free(buffer)
                 fclose(input)
             }
         }
-        zipClose(zip, nil)
+        m_zipClose(zip, nil)
         
         // Completed. Update progress handler.
         if let progressHandler = progress{
@@ -421,7 +421,7 @@ public class Zip {
         progressTracker.kind = ProgressKind.file
 
         // Begin Zipping
-        let zip = zipOpen(destinationPath, APPEND_STATUS_CREATE)
+        let zip = m_zipOpen(destinationPath, APPEND_STATUS_CREATE)
 
         for archiveFile in archiveFiles {
 
@@ -447,7 +447,7 @@ public class Zip {
             }
 
             // Write the data as a file to zip
-            zipOpenNewFileInZip3(zip,
+            m_zipOpenNewFileInZip3(zip,
                                  archiveFile.filename,
                                  &zipInfo,
                                  nil,
@@ -463,8 +463,8 @@ public class Zip {
                                  Z_DEFAULT_STRATEGY,
                                  password,
                                  0)
-            zipWriteInFileInZip(zip, archiveFile.data.bytes, UInt32(archiveFile.data.length))
-            zipCloseFileInZip(zip)
+            m_zipWriteInFileInZip(zip, archiveFile.data.bytes, UInt32(archiveFile.data.length))
+            m_zipCloseFileInZip(zip)
 
             // Update progress handler
             currentPosition += archiveFile.data.length
@@ -476,7 +476,7 @@ public class Zip {
             progressTracker.completedUnitCount = Int64(currentPosition)
         }
 
-        zipClose(zip, nil)
+        m_zipClose(zip, nil)
 
         // Completed. Update progress handler.
         if let progressHandler = progress{
